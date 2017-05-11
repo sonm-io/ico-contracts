@@ -12,7 +12,7 @@ contract ICO {
 
   uint constant PRICE = 1212; // SNM per ETH
 
-  address constant snm;
+  address constant snm = {{SNM}};
   address constant team;
   address constant tradeRobot;
   address constant bountyFund;
@@ -97,6 +97,7 @@ contract ICO {
     team.send(this.balance);
     Withdraw(this.balance);
   }
+
 
 
   // Private functions
