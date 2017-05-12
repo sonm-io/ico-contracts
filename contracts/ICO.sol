@@ -12,28 +12,32 @@ contract ICO {
 
   uint constant PRICE = 1212; // SNM per ETH
 
-  address constant snm = {{SNM}};
-  address constant team;
-  address constant tradeRobot;
-  address constant bountyFund;
-  address constant ecosystemFund;
-  address constant teamFund;
+  // Events
+  // ======
 
-  // You may wonder why we use constants instead of storage variables.
-  // Constants have some benefits:
-  //  - much safer as they can not be modified by buggy code;
-  //  - much cheaper − spare us 5k gas for not reading from storage;
-  //  - shorter bytecode, less arguments in constructor.
-  // The only downside of using constants is that they make testing more
-  // complicated. We implemented small templating plugin for truffle
-  // to simplify this. (FIXME: link)
+  event Withdraw(uint value);
 
+  // State variables
+  // ===============
+
+  PreICO preICO;
+  SNM public snm;
+
+  address team;
+  address tradeRobot;
+  address bountyFund;
+  address ecosystemFund;
+  address teamFund;
 
 
   // Constructor
   // ===========
 
-  function ICO(address _snm, address _team, address _robot) {
+  function ICO(address _preICO, address _team, address _tradeRobot) {
+    snm = new SNM(this);
+    preICO = PreICO(_preICO);
+    team = _team;
+    tradeRobot = _tradeRobot;
   }
 
 
@@ -85,7 +89,7 @@ contract ICO {
   }
 
 
-  enum IcoState { Created, Running, Paused, Finished };
+  enum IcoState { Created, Running, Paused, Finished }
 
   function setIcoState(IcoState _newState) {
     // FIXME: Start in Paused state?
@@ -94,7 +98,7 @@ contract ICO {
 
   // Withdraw all collected ethers to the team's multisig wallet;
   function withdrawEther() {
-    team.send(this.balance);
+    team.transfer(this.balance);
     Withdraw(this.balance);
   }
 
