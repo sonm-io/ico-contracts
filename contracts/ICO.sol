@@ -10,12 +10,15 @@ contract ICO {
   // Constants
   // =========
 
-  uint constant PRICE = 1212; // SNM per ETH
+  uint public constant TOKEN_PRICE = 606; // SNM per ETH
+  uint public constant TOKENS_FOR_SALE = 165680000 * 1e18;
+
 
   // Events
   // ======
 
   event Withdraw(uint value);
+
 
   // State variables
   // ===============
@@ -28,6 +31,8 @@ contract ICO {
   address bountyFund;
   address ecosystemFund;
   address teamFund;
+
+  uint tokensSold = 0;
 
 
   // Constructor
@@ -52,10 +57,16 @@ contract ICO {
 
 
   function buy(address _investor) payable {
-    if(msg.value > 0) {
-      uint _snmValue = msg.value * PRICE;
-      snm.mint(_investor, _snmValue);
-    }
+    if(msg.value == 0) throw;
+
+    uint _snmValue = msg.value * TOKEN_PRICE;
+    uint _bonus = getBonus(_snmValue, tokensSold);
+    uint _total = _snmValue + _bonus;
+
+    if(tokensSold + _total > TOKENS_FOR_SALE) throw;
+
+    snm.mint(_investor, _total);
+    tokensSold += _total;
   }
 
 
@@ -66,6 +77,27 @@ contract ICO {
       // Mint DOUBLE amount of tokens for our generous early investors.
       snm.mint(msg.sender, _sptBalance * 2);
     }
+  }
+
+
+  function getBonus(uint _value, uint _sold) public constant returns (uint) {
+    uint[8] memory _promille = [ 150, 125, 100, 75, 50, 38, 25, uint(13) ];
+    uint _step = TOKENS_FOR_SALE / 10;
+    uint _bonus = 0;
+
+    for(uint8 i = 0; _value > 0 && i < _promille.length; ++i) {
+      uint _min = _step * i;
+      uint _max = _step * (i+1);
+
+      if(_sold >= _min && _sold < _max) {
+        uint _bonusedPart = min(_value, _max - _sold);
+        _bonus += _bonusedPart * _promille[i] / 1000;
+        _value -= _bonusedPart;
+        _sold  += _bonusedPart;
+      }
+    }
+
+    return _bonus;
   }
 
 
@@ -107,11 +139,11 @@ contract ICO {
   // Private functions
   // =================
 
-  function getBonus() internal {
+  function allocateFunds() internal {
 
   }
 
-  function allocateFunds() internal {
-
+  function min(uint a, uint b) internal constant returns (uint) {
+    return a < b ? a : b;
   }
 }

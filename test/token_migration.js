@@ -3,7 +3,7 @@ const SNM = artifacts.require("./SNM.sol");
 const ICO = artifacts.require("./ICO.sol");
 const MockPreICO = artifacts.require("./MockPreICO.sol");
 
-contract("ICO", () => {
+contract("token migration", () => {
   const [a, b, c] = web3.eth.accounts;
   let preICO;
   let ico;
