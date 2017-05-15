@@ -5,6 +5,12 @@ import "./PreICO.sol";
 import "./SNM.sol";
 
 
+// TODO:
+//  - allocateFunds
+//  - setRobotAddress
+//  - foreignBuy && currency limits
+
+
 contract ICO {
 
   // Constants
@@ -17,7 +23,11 @@ contract ICO {
   // Events
   // ======
 
+  event Migrate(address holder, uint snmValue);
   event Withdraw(uint value);
+  event RunIco();
+  event PauseIco();
+  event FinishIco(address teamFund, address ecosystemFund, address bountyFund);
 
 
   // State variables
@@ -28,17 +38,20 @@ contract ICO {
 
   address team;
   address tradeRobot;
-  address bountyFund;
-  address ecosystemFund;
-  address teamFund;
+  modifier teamOnly { if(msg.sender != team) throw; _; }
+  modifier robotOnly { if(msg.sender != tradeRobot) throw; _; }
 
   uint tokensSold = 0;
+
+  enum IcoState { Created, Running, Paused, Finished }
+  IcoState icoState = IcoState.Created;
+  modifier isRunning { if(icoState != IcoState.Running) throw; _; }
 
 
   // Constructor
   // ===========
 
-  function ICO(address _preICO, address _team, address _tradeRobot) {
+  function ICO(address _team, address _preICO, address _tradeRobot) {
     snm = new SNM(this);
     preICO = PreICO(_preICO);
     team = _team;
@@ -51,12 +64,12 @@ contract ICO {
   // ================
 
   // Here you can buy some tokens (just don't forget to provide enough gas).
-  function() payable {
+  function() external payable {
     buy(msg.sender);
   }
 
 
-  function buy(address _investor) payable {
+  function buy(address _investor) public payable isRunning {
     if(msg.value == 0) throw;
 
     uint _snmValue = msg.value * TOKEN_PRICE;
@@ -70,17 +83,24 @@ contract ICO {
   }
 
 
-  function migrate() {
+  function migrate() external {
+    if(icoState != IcoState.Created && icoState != IcoState.Running) throw;
+
     uint _sptBalance = preICO.balanceOf(msg.sender);
-    if(_sptBalance > 0) {
-      preICO.burnTokens(msg.sender);
-      // Mint DOUBLE amount of tokens for our generous early investors.
-      snm.mint(msg.sender, _sptBalance * 2);
-    }
+    if(_sptBalance == 0) throw;
+
+    preICO.burnTokens(msg.sender);
+    // Mint DOUBLE amount of tokens for our generous early investors.
+
+    uint _snmValue = _sptBalance * 2;
+    snm.mint(msg.sender, _snmValue);
+    Migrate(msg.sender, _snmValue);
   }
 
 
-  function getBonus(uint _value, uint _sold) public constant returns (uint) {
+  function getBonus(uint _value, uint _sold)
+    public constant returns (uint)
+  {
     uint[8] memory _promille = [ 150, 125, 100, 75, 50, 38, 25, uint(13) ];
     uint _step = TOKENS_FOR_SALE / 10;
     uint _bonus = 0;
@@ -113,7 +133,10 @@ contract ICO {
     address _investor,
     uint _snmValue,
     Currency _cur,
-    uint _curValue)
+    string _curAddress,
+    uint _curValue
+  )
+    external robotOnly isRunning
   {
     // TODO:
     // - chk msg.sender
@@ -121,15 +144,42 @@ contract ICO {
   }
 
 
-  enum IcoState { Created, Running, Paused, Finished }
 
-  function setIcoState(IcoState _newState) {
-    // FIXME: Start in Paused state?
+  // ICO state management: start / pause / finish
+  // --------------------------------------------
+
+  function startIco() external teamOnly {
+    if(icoState != IcoState.Created && icoState != IcoState.Paused) throw;
+    icoState = IcoState.Running;
+    RunIco();
   }
 
 
-  // Withdraw all collected ethers to the team's multisig wallet;
-  function withdrawEther() {
+  function pauseIco() external teamOnly {
+    if(icoState != IcoState.Running) throw;
+    icoState = IcoState.Paused;
+    PauseIco();
+  }
+
+
+  function finishIco(
+    address _teamFund,
+    address _ecosystemFund,
+    address _bountyFund
+  )
+    external teamOnly
+  {
+    if(icoState != IcoState.Running && icoState != IcoState.Paused)
+      throw;
+
+    // TODO: allocate funds depending on snm.totalSupply()
+
+    FinishIco(_teamFund, _ecosystemFund, _bountyFund);
+  }
+
+
+  // Withdraw all collected ethers to the team's multisig wallet
+  function withdrawEther() external teamOnly { // FIXME: do we need `teamOnly` here?
     team.transfer(this.balance);
     Withdraw(this.balance);
   }
@@ -138,10 +188,6 @@ contract ICO {
 
   // Private functions
   // =================
-
-  function allocateFunds() internal {
-
-  }
 
   function min(uint a, uint b) internal constant returns (uint) {
     return a < b ? a : b;

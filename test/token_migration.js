@@ -26,7 +26,7 @@ contract("token migration", () => {
   );
 
   it("should be able to create ICO", () =>
-    ICO.new(preICO.address, a, b).then(res => {
+    ICO.new(a, preICO.address, b).then(res => {
       assert.isOk(res && res.address, "has invalid address");
       ico = res;
       return ico.snm.call().then(_snm => snm = SNM.at(_snm));
@@ -50,14 +50,14 @@ contract("token migration", () => {
   );
 
   it("should not change SPT balance on repeated migrations", () =>
-    ico.migrate({from: c}).then(() =>
-      chkBalance(preICO, c, 0, "balance should not change")
-    )
+    ico.migrate({from: c})
+      .then(() => assert.fail("should throw"))
+      .catch(() => chkBalance(preICO, c, 0, "balance should not change"))
   );
 
   it("should not change SNM balance on repeated migrations", () =>
-    ico.migrate({from: c}).then(() =>
-      chkBalance(snm, c, 3 * 2, "balance should not change")
-    )
+    ico.migrate({from: c})
+      .then(() => assert.fail("should throw"))
+      .catch(() => chkBalance(snm, c, 3 * 2, "balance should not change"))
   );
 })
