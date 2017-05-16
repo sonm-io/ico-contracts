@@ -1,12 +1,16 @@
 
 pragma solidity ^0.4.11;
 
+import "../installed_contracts/token/StandardToken.sol";
 
-contract SNM  {
+contract SNM  is StandardToken {
 
   // Constants
   // =========
 
+  string public name = "SONM Token";
+  string public symbol = "SNM";
+  uint public decimals = 18;
   uint constant TOKEN_LIMIT = 222 * 1e6 * 1e18;
 
 
@@ -14,8 +18,6 @@ contract SNM  {
   // ===============
 
   address public ico;
-  mapping (address => uint) balance;
-  uint public totalSupply;
 
 
   // Constructor
@@ -23,14 +25,6 @@ contract SNM  {
 
   function SNM(address _ico) {
     ico = _ico;
-  }
-
-
-  // Public functions
-  // ================
-
-  function balanceOf(address _holder) external returns (uint) {
-    return balance[_holder];
   }
 
 
@@ -43,9 +37,8 @@ contract SNM  {
     if(msg.sender != ico) throw;
     if(_value == 0 || totalSupply + _value > TOKEN_LIMIT) throw;
 
-    balance[_holder] += _value;
+    balances[_holder] += _value;
     totalSupply += _value;
-
-    // TODO: Transfer event
+    Transfer(0x0, _holder, _value);
   }
 }
