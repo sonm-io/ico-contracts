@@ -8,7 +8,8 @@ import "./SNM.sol";
 // TODO:
 //  - allocateFunds
 //  - setRobotAddress
-//  - foreignBuy && currency limits
+// FIXME:
+//  - merge buy & foreignBuy?
 
 
 contract ICO {
@@ -19,12 +20,17 @@ contract ICO {
   uint public constant TOKEN_PRICE = 606; // SNM per ETH
   uint public constant TOKENS_FOR_SALE = 165680000 * 1e18;
 
+  enum Currency { BTC, LTC, Dash }
+  uint private constant CURRENCY_LEN = uint(Currency.Dash) + 1;
+  // Limit the amount of tokens that can be sold for the specific currency.
+  uint[] public CURRENCY_LIMIT = [ 10 * 1e18, 20 * 1e18, 30 * 1e18 ];
 
   // Events
   // ======
 
   event Migrate(address holder, uint snmValue);
   event Withdraw(uint value);
+  event CurrencyOverflow(Currency currency, string curAddress);
   event RunIco();
   event PauseIco();
   event FinishIco(address teamFund, address ecosystemFund, address bountyFund);
@@ -125,7 +131,6 @@ contract ICO {
   // Priveleged functions
   // ====================
 
-  enum Currency { BTC, LTC, Dash }
 
   // This is called by our friendly robot to allow you to buy SNM for various
   // cryptos.
@@ -133,14 +138,25 @@ contract ICO {
     address _investor,
     uint _snmValue,
     Currency _cur,
-    string _curAddress,
-    uint _curValue
+    string _curAddress
   )
     external robotOnly isRunning
   {
-    // TODO:
-    // - chk msg.sender
-    // - chk currency limits
+    uint _curIx = uint(_cur);
+    if(_curIx >= CURRENCY_LEN) throw;
+    if(CURRENCY_LIMIT[_curIx] == 0) {
+      CurrencyOverflow(_cur, _curAddress);
+      return;
+    }
+    uint _bonus = getBonus(_snmValue, tokensSold);
+    uint _total = _snmValue + _bonus;
+    if(CURRENCY_LIMIT[_curIx] < _total) {
+      CurrencyOverflow(_cur, _curAddress);
+      return;
+    }
+
+    CURRENCY_LIMIT[_curIx] -= _total;
+    snm.mint(_investor, _total);
   }
 
 
