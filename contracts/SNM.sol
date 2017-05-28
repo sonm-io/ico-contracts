@@ -34,8 +34,9 @@ contract SNM  is StandardToken {
 
   // Mint few tokens and transefer them to some address.
   function mint(address _holder, uint _value) external {
-    if(msg.sender != ico) throw;
-    if(_value == 0 || totalSupply + _value > TOKEN_LIMIT) throw;
+    require(msg.sender == ico);
+    require(_value != 0);
+    require(totalSupply + _value <= TOKEN_LIMIT);
 
     balances[_holder] += _value;
     totalSupply += _value;

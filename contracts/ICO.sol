@@ -25,6 +25,7 @@ contract ICO {
   // Limit the amount of tokens that can be sold for the specific currency.
   uint[] public CURRENCY_LIMIT = [ 10 * 1e18, 20 * 1e18, 30 * 1e18 ];
 
+
   // Events
   // ======
 
@@ -44,14 +45,13 @@ contract ICO {
 
   address team;
   address tradeRobot;
-  modifier teamOnly { if(msg.sender != team) throw; _; }
-  modifier robotOnly { if(msg.sender != tradeRobot) throw; _; }
+  modifier teamOnly { require(msg.sender == team); _; }
+  modifier robotOnly { require(msg.sender == tradeRobot); _; }
 
   uint tokensSold = 0;
 
   enum IcoState { Created, Running, Paused, Finished }
   IcoState icoState = IcoState.Created;
-  modifier isRunning { if(icoState != IcoState.Running) throw; _; }
 
 
   // Constructor
@@ -75,14 +75,15 @@ contract ICO {
   }
 
 
-  function buy(address _investor) public payable isRunning {
-    if(msg.value == 0) throw;
+  function buy(address _investor) public payable {
+    require(icoState == IcoState.Running);
+    require(msg.value > 0);
 
     uint _snmValue = msg.value * TOKEN_PRICE;
     uint _bonus = getBonus(_snmValue, tokensSold);
     uint _total = _snmValue + _bonus;
 
-    if(tokensSold + _total > TOKENS_FOR_SALE) throw;
+    require(tokensSold + _total <= TOKENS_FOR_SALE);
 
     snm.mint(_investor, _total);
     tokensSold += _total;
@@ -90,10 +91,10 @@ contract ICO {
 
 
   function migrate() external {
-    if(icoState != IcoState.Created && icoState != IcoState.Running) throw;
+    require(icoState == IcoState.Created || icoState == IcoState.Running);
 
     uint _sptBalance = preICO.balanceOf(msg.sender);
-    if(_sptBalance == 0) throw;
+    require(_sptBalance > 0);
 
     preICO.burnTokens(msg.sender);
     // Mint DOUBLE amount of tokens for our generous early investors.
@@ -140,8 +141,10 @@ contract ICO {
     Currency _cur,
     string _curAddress
   )
-    external robotOnly isRunning
+    external robotOnly
   {
+    require(icoState == IcoState.Running);
+
     uint _curIx = uint(_cur);
     if(_curIx >= CURRENCY_LEN) throw;
     if(CURRENCY_LIMIT[_curIx] == 0) {
@@ -165,14 +168,14 @@ contract ICO {
   // --------------------------------------------
 
   function startIco() external teamOnly {
-    if(icoState != IcoState.Created && icoState != IcoState.Paused) throw;
+    require(icoState == IcoState.Created || icoState == IcoState.Paused);
     icoState = IcoState.Running;
     RunIco();
   }
 
 
   function pauseIco() external teamOnly {
-    if(icoState != IcoState.Running) throw;
+    require(icoState == IcoState.Running);
     icoState = IcoState.Paused;
     PauseIco();
   }
@@ -185,17 +188,17 @@ contract ICO {
   )
     external teamOnly
   {
-    if(icoState != IcoState.Running && icoState != IcoState.Paused)
-      throw;
+    require(icoState == IcoState.Running || icoState == IcoState.Paused);
 
     // TODO: allocate funds depending on snm.totalSupply()
 
+    icoState = IcoState.Finished;
     FinishIco(_teamFund, _ecosystemFund, _bountyFund);
   }
 
 
   // Withdraw all collected ethers to the team's multisig wallet
-  function withdrawEther() external teamOnly { // FIXME: do we need `teamOnly` here?
+  function withdrawEther() external teamOnly {
     team.transfer(this.balance);
     Withdraw(this.balance);
   }
