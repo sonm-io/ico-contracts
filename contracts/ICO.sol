@@ -8,8 +8,10 @@ import "./SNM.sol";
 // TODO:
 //  - allocateFunds
 //  - setRobotAddress
+//  - accept & withdraw TIME (offchain?)
 // FIXME:
 //  - merge buy & foreignBuy?
+//  - do we need currency limits?
 
 
 contract ICO {
@@ -90,18 +92,9 @@ contract ICO {
   }
 
 
+  // Early investors are able to migrate their SPT into SNM.
   function migrate() external {
-    require(icoState == IcoState.Created || icoState == IcoState.Running);
-
-    uint _sptBalance = preICO.balanceOf(msg.sender);
-    require(_sptBalance > 0);
-
-    preICO.burnTokens(msg.sender);
-    // Mint DOUBLE amount of tokens for our generous early investors.
-
-    uint _snmValue = _sptBalance * 2;
-    snm.mint(msg.sender, _snmValue);
-    Migrate(msg.sender, _snmValue);
+    doMigration(msg.sender);
   }
 
 
@@ -163,6 +156,12 @@ contract ICO {
   }
 
 
+  // We can force migration for some investors
+  // (just to not let them lose their tokens).
+  function forceMigration(address _investor) public teamOnly {
+    doMigration(_investor);
+  }
+
 
   // ICO state management: start / pause / finish
   // --------------------------------------------
@@ -211,5 +210,24 @@ contract ICO {
 
   function min(uint a, uint b) internal constant returns (uint) {
     return a < b ? a : b;
+  }
+
+
+  function doMigration(address _investor) internal {
+    // Migration must be completed before ICO is finished, because
+    // total amount of tokens must be known to calculate amounts minted for
+    // funds (bounty, team, ecosystem).
+    require(icoState != IcoState.Finished);
+
+    uint _sptBalance = preICO.balanceOf(_investor);
+    require(_sptBalance > 0);
+
+    preICO.burnTokens(_investor);
+
+    // Mint DOUBLE amount of tokens for our generous early investors.
+    uint _snmValue = _sptBalance * 2;
+    snm.mint(_investor, _snmValue);
+
+    Migrate(_investor, _snmValue);
   }
 }
