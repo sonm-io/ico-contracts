@@ -193,6 +193,7 @@ contract ICO {
     // TODO: allocate funds depending on snm.totalSupply()
 
     icoState = IcoState.Finished;
+    snm.defrost();
     FinishIco(_teamFund, _ecosystemFund, _bountyFund);
   }
 
