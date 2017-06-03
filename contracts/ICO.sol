@@ -5,10 +5,6 @@ import "./PreICO.sol";
 import "./SNM.sol";
 
 
-// TODO:
-//  - setRobotAddress
-
-
 contract ICO {
 
   // Constants
@@ -112,6 +108,12 @@ contract ICO {
     require(_snmValue > 0);
     buy(_investor, _snmValue);
     ForeignBuy(_investor, _snmValue, _txHash);
+  }
+
+
+  // Team can replace tradeRobot in case of malfunction.
+  function setRobot(address _robot) external teamOnly {
+    tradeRobot = _ robot;
   }
 
 
