@@ -11,7 +11,7 @@ contract SNM  is StandardToken {
   string public name = "SONM Token";
   string public symbol = "SNM";
   uint public decimals = 18;
-  uint constant TOKEN_LIMIT = 222 * 1e6 * 1e18;
+  uint constant TOKEN_LIMIT = 444 * 1e6 * 1e18;
 
 
   // State variables

@@ -10,8 +10,9 @@ contract ICO {
   // Constants
   // =========
 
-  uint public constant TOKEN_PRICE = 606; // SNM per ETH
-  uint public constant TOKENS_FOR_SALE = 165680000 * 1e18;
+  uint public constant TOKEN_PRICE = 2424; // SNM per ETH
+  uint public constant TOKENS_FOR_SALE = 331360000 * 1e18;
+  uint public constant SNM_PER_SPT = 4; // Migration rate
 
 
   // Events
@@ -198,8 +199,8 @@ contract ICO {
 
     preICO.burnTokens(_investor);
 
-    // Mint DOUBLE amount of tokens for our generous early investors.
-    uint _snmValue = _sptBalance * 2;
+    // Mint extra amount of tokens for our generous early investors.
+    uint _snmValue = _sptBalance * SNM_PER_SPT;
     snm.mint(_investor, _snmValue);
 
     Migrate(_investor, _snmValue);
