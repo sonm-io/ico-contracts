@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IC=installed_contracts
+IC=contracts/installed
 mkdir -p $IC/token
 
 

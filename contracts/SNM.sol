@@ -1,7 +1,7 @@
 
 pragma solidity ^0.4.11;
 
-import "../installed_contracts/token/StandardToken.sol";
+import "./installed/token/StandardToken.sol";
 
 contract SNM  is StandardToken {
 
