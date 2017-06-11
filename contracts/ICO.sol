@@ -32,8 +32,8 @@ contract ICO {
   PreICO preICO;
   SNM public snm;
 
-  address team;
-  address tradeRobot;
+  address public team;
+  address public tradeRobot;
   modifier teamOnly { require(msg.sender == team); _; }
   modifier robotOnly { require(msg.sender == tradeRobot); _; }
 
@@ -114,7 +114,7 @@ contract ICO {
 
   // Team can replace tradeRobot in case of malfunction.
   function setRobot(address _robot) external teamOnly {
-    tradeRobot = _ robot;
+    tradeRobot = _robot;
   }
 
 
@@ -151,12 +151,16 @@ contract ICO {
   {
     require(icoState == IcoState.Running || icoState == IcoState.Paused);
 
-    // TODO: allocate funds depending on snm.totalSupply()
+    uint alreadyMinted = snm.totalSupply();
+    uint totalAmount = alreadyMinted * 1110 / 889;
+    // totalAmount = alreadyMinted + ecosystem + team + bounty;
 
-    // snm.mint(_teamFund);
+    snm.mint(_teamFund, 10 * totalAmount / 111);
+    snm.mint(_ecosystemFund, totalAmount / 10);
+    snm.mint(_bountyFund, totalAmount / 111);
+    snm.defrost();
 
     icoState = IcoState.Finished;
-    snm.defrost();
     FinishIco(_teamFund, _ecosystemFund, _bountyFund);
   }
 
