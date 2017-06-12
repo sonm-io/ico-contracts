@@ -3,6 +3,7 @@ pragma solidity ^0.4.11;
 
 import "./PreICO.sol";
 import "./SNM.sol";
+import "./installed/token/ERC20.sol";
 
 
 contract ICO {
@@ -20,7 +21,6 @@ contract ICO {
 
   event ForeignBuy(address holder, uint snmValue, string txHash);
   event Migrate(address holder, uint snmValue);
-  event Withdraw(uint value);
   event RunIco();
   event PauseIco();
   event FinishIco(address teamFund, address ecosystemFund, address bountyFund);
@@ -60,9 +60,13 @@ contract ICO {
 
   // Here you can buy some tokens (just don't forget to provide enough gas).
   function() external payable {
+    buyFor(msg.sender);
+  }
+
+  function buyFor(address _investor) public payable {
     require(icoState == IcoState.Running);
     require(msg.value > 0);
-    buy(msg.sender, msg.value * TOKEN_PRICE);
+    buy(_investor, msg.value * TOKEN_PRICE);
   }
 
 
@@ -166,9 +170,14 @@ contract ICO {
 
 
   // Withdraw all collected ethers to the team's multisig wallet
-  function withdrawEther() external teamOnly {
-    team.transfer(this.balance);
-    Withdraw(this.balance);
+  function withdrawEther(uint _value) external teamOnly {
+    team.transfer(_value);
+  }
+
+  function withdrawToken(address _tokenContract, uint _val) external teamOnly
+  {
+    ERC20 _tok = ERC20(_tokenContract);
+    _tok.transfer(team, _val);
   }
 
 
