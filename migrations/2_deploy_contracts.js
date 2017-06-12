@@ -3,7 +3,6 @@ const MSig = artifacts.require("./installed/MultiSigWallet.sol");
 
 
 module.exports = (deployer, network) => {
-
   const team
     = network === "mainnet"
       ? [ "0xCc14D25Fae961Ced09709BE04bf13c28Db3FF81b" // Alexey
@@ -11,10 +10,10 @@ module.exports = (deployer, network) => {
         ]
       : web3.eth.accounts.slice(0, 2);
   const requiredConfirmations = team.length;
-  const preICO = "0x0000000000000000000000000000000000000000";
+  const preICO = "0xc8e3aA7718CF72f927B845D834be0b93C66b34E1";
   const robot
     = network === "mainnet"
-      ?  "0x0000000000000000000000000000000000000000"
+      ?  "0xffa40c76E54b528A3C0538116c387f4131923388"
       : web3.eth.accounts[3];
 
   deployer.deploy(MSig, team, requiredConfirmations)
