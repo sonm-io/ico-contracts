@@ -5,7 +5,7 @@ const MockPreICO = artifacts.require("./MockPreICO.sol");
 
 contract("bonus pattern", () => {
 
-  const TOKENS_FOR_SALE = new web3.BigNumber("1e18").mul(165680000);
+  const TOKENS_FOR_SALE = new web3.BigNumber("1e18").mul(331360000);
 
   const [a, b, c] = web3.eth.accounts;
   let ico;

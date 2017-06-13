@@ -46,7 +46,7 @@ contract("token migration", () => {
   );
 
   it("SNM balance should be 2*SPT after migration", () =>
-    chkBalance(snm, c, 3 * 2, "SPT should be doubled after migration")
+    chkBalance(snm, c, 3 * 4, "SPT should be quadrupled after migration")
   );
 
   it("should not change SPT balance on repeated migrations", () =>
@@ -58,6 +58,6 @@ contract("token migration", () => {
   it("should not change SNM balance on repeated migrations", () =>
     ico.migrate({from: c})
       .then(() => assert.fail("should throw"))
-      .catch(() => chkBalance(snm, c, 3 * 2, "balance should not change"))
+      .catch(() => chkBalance(snm, c, 3 * 4, "balance should not change"))
   );
 })
