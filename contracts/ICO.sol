@@ -11,7 +11,7 @@ contract ICO {
   // Constants
   // =========
 
-  uint public constant TOKEN_PRICE = 2424; // SNM per ETH
+  uint public constant TOKEN_PRICE = 2824; // SNM per ETH
   uint public constant TOKENS_FOR_SALE = 331360000 * 1e18;
   uint public constant SNM_PER_SPT = 4; // Migration rate
 
