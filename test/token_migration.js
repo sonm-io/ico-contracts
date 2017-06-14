@@ -40,7 +40,7 @@ contract("token migration", () => {
   );
 
   it("should be able to migrate some tokens", () =>
-    ico.migrate({from: c}).then(() =>
+    ico.migrateSome([c], {from: b}).then(() =>
       chkBalance(preICO, c, 0, "balance should be empty after migration")
     )
   );
@@ -50,13 +50,13 @@ contract("token migration", () => {
   );
 
   it("should not change SPT balance on repeated migrations", () =>
-    ico.migrate({from: c})
+    ico.migrateSome([c], {from: b})
       .then(() => assert.fail("should throw"))
       .catch(() => chkBalance(preICO, c, 0, "balance should not change"))
   );
 
   it("should not change SNM balance on repeated migrations", () =>
-    ico.migrate({from: c})
+    ico.migrateSome([c], {from: b})
       .then(() => assert.fail("should throw"))
       .catch(() => chkBalance(snm, c, 3 * 4, "balance should not change"))
   );

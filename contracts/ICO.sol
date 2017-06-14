@@ -63,16 +63,11 @@ contract ICO {
     buyFor(msg.sender);
   }
 
+
   function buyFor(address _investor) public payable {
     require(icoState == IcoState.Running);
     require(msg.value > 0);
     buy(_investor, msg.value * TOKEN_PRICE);
-  }
-
-
-  // Early investors are able to migrate their SPT into SNM.
-  function migrate() external {
-    doMigration(msg.sender);
   }
 
 
@@ -122,10 +117,10 @@ contract ICO {
   }
 
 
-  // We can force migration for some investors
-  // (just to not let them lose their tokens).
-  function forceMigration(address _investor) external teamOnly {
-    doMigration(_investor);
+  // We can force migration for early investors
+  function migrateSome(address[] _investors) external robotOnly {
+    for(uint i = 0; i < _investors.length; i++)
+      doMigration(_investors[i]);
   }
 
 
